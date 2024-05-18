@@ -1,5 +1,26 @@
 import url from 'node:url';
 import { JSDOM } from 'jsdom';
+import { writeFile } from 'fs'
+
+function printFile(url_list) {
+  const date = new Date(Date.now()).toString()
+  let text = "crawl master500\n"
+  text += `generated: ${date}\n\n`
+  for (let i=0; i < url_list.length; i++) {
+    text += `${url_list[i][0].toString()}\n`
+    if (url_list[i][1]) {
+      for (let k=0; k < url_list[i][1].length; k++) {
+        text += `  ${url_list[i][1][k].toString()}\n`
+      }
+    }
+    text += '\n'
+  }
+
+  writeFile('report.js', text, (err) => {
+    if (err) throw err;
+  })
+}
+
 
 async function crawlPage(baseURL, currentURL = baseURL) {
   console.log(`crawling ${currentURL}`)
@@ -37,6 +58,7 @@ async function crawlPage(baseURL, currentURL = baseURL) {
 
 async function crawl(baseURL) {
   let url_set = new Set();
+  let url_list = []
   const initial_urls = await crawlPage(baseURL)
   for (let i=0; i < initial_urls.length; i++) {
     url_set.add(initial_urls[i])
@@ -50,12 +72,17 @@ async function crawl(baseURL) {
     return false
   })
 
+  let url_list_index = -1;
   while (new_urls.length > 0) {
-    let url_result = await crawlPage(baseURL, new_urls.pop())
+    let curr = new_urls.pop()
+    let url_result = await crawlPage(baseURL, curr)
+    url_list.push([curr])
+    url_list_index++
     if (!url_result || url_result.length < 1) {
       continue;
     }
-    console.log(url_result)
+    url_list[url_list_index].push(url_result)
+
     for (let i=0; i < url_result.length; i++) {
       if (!url_set.has(url_result[i])) {
         url_set.add(url_result[i])
@@ -66,7 +93,7 @@ async function crawl(baseURL) {
     }
   }
 
-  return [...url_set]
+  return url_list
 }
 
 function getURLsFromHTML(htmlBody, baseURL) {
@@ -109,4 +136,4 @@ function normalizeURL2(address_str) {
   return normalURL;
 }
 
-export { normalizeURL, getURLsFromHTML, crawlPage, crawl };
+export { normalizeURL, getURLsFromHTML, crawlPage, crawl, printFile };

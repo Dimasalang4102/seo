@@ -1,5 +1,5 @@
 import { argv } from 'node:process'
-import { crawl } from './crawl.js'
+import { crawl, printFile } from './crawl.js'
 
 
 
@@ -16,7 +16,7 @@ async function main() {
   const baseURL = argv[2]
   console.log(`Starting at ${baseURL}...`)
   const urls = await crawl(baseURL)
-  console.log(urls)
+  printFile(urls)
 }
 
 main()
